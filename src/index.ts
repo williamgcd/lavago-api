@@ -1,14 +1,14 @@
-import 'module-alias/register';
-import 'dotenv/config';
 import app from './app';
+import { CONFIG } from '@/config';
 
-const PORT = process.env.PORT || 3000;
+const PORT = CONFIG.port;
 
-if (require.main === module) {
+if (import.meta.main) {
     app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`🚀 ${CONFIG.api.name} running on port ${PORT}`);
         console.log(`📊 Health check: http://localhost:${PORT}/health`);
+        console.log(`🔧 Test config: http://localhost:${PORT}/test-config`);
     });
 }
 
-export { app }; 
+export default app; 

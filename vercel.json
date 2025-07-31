@@ -1,21 +1,21 @@
 {
-	"version": 2,
-	"builds": [
-		{
-			"src": "src/vercel.ts",
-			"use": "@vercel/node",
-			"config": {
-				"tsConfig": "tsconfig.vercel.json"
-			}
-		}
-	],
-	"routes": [
-		{
-			"src": "/(.*)",
-			"dest": "/src/vercel.ts"
-		}
-	],
-	"env": {
-		"NODE_ENV": "production"
-	}
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "tsConfig": "tsconfig.json"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/src/index.ts"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 } 
