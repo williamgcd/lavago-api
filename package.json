@@ -1,0 +1,63 @@
+{
+  "name": "api",
+  "version": "0.0.1-alpha",
+  "description": "LavaGo Express API",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  	"scripts": {
+		"build": "tsc",
+		"dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
+		"start": "node dist/index.js",
+		"vercel-build": "tsc",
+		"deploy": "./scripts/deploy.sh",
+		"deploy:prod": "./scripts/deploy.sh --prod",
+
+		"- DATABASE -------------------------------------------": "",
+		"db:generate": "drizzle-kit generate",
+    	"db:migrate": "drizzle-kit migrate",
+		"db:studio": "drizzle-kit studio",
+		
+		"- FORMATTERS -----------------------------------------": "",
+		"format": "prettier --write src/**/*.ts",
+		"format:check": "prettier --check src/**/*.ts",
+		
+		"- TESTS ----------------------------------------------": "",
+		"test": "jest --runInBand",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
+
+		"": ""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+		"@libsql/client": "^0.15.0",
+		"@types/jsonwebtoken": "^9.0.10",
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.0",
+		"drizzle-kit": "^0.31.4",
+		"drizzle-orm": "^0.44.3",
+		"express": "^5.1.0",
+		"express-rate-limit": "^8.0.1",
+		"helmet": "^8.1.0",
+		"jsonwebtoken": "^9.0.2",
+		"uuid": "^11.1.0",
+		"zod": "^4.0.5"
+	},
+	"devDependencies": {
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.3",
+		"@types/jest": "^30.0.0",
+		"@types/node": "^24.1.0",
+		"@types/supertest": "^6.0.3",
+		"jest": "^30.0.5",
+		"prettier": "^3.6.2",
+		"supertest": "^7.1.4",
+		"ts-jest": "^29.4.0",
+		"ts-node-dev": "^2.0.0",
+		"tsconfig-paths": "^4.2.0",
+		"typescript": "^5.8.3"
+	}
+}
