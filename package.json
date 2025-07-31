@@ -3,10 +3,11 @@
     "version": "0.0.1-alpha",
     "description": "LavaGo API",
     "main": "src/index.ts",
+    "output": "public/index.js",
     "scripts": {
         "dev": "bun --watch src/index.ts",
         "start": "bun run src/index.ts",
-        "build": "bun build src/index.ts --outdir dist --target bun",
+        "build": "bun build src/index.ts --outdir public --target bun",
         "test": "bun test"
     },
     "dependencies": {
