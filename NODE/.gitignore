@@ -1,8 +1,0 @@
-.env
-.env.local
-.env.test
-
-dist/
-logs/ 
-node_modules/
-.vercel
