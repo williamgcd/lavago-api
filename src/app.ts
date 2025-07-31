@@ -1,4 +1,3 @@
-import 'module-alias/register';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -29,6 +28,14 @@ app.use(express.urlencoded({ extended: true }));
 // JSON validator middleware
 // This is needed for POST and PUT requests
 app.use(jsonValidator);
+
+// App is running...
+app.get('/', async (_, res, next) => {
+    res.status(200).json({
+        status: 'ok',
+        message: 'LavaGo API is running...',
+    });
+});
 
 // Health check
 app.get('/health', async (_, res, next) => {
