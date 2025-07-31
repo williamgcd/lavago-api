@@ -3,7 +3,7 @@ import { PAGINATION } from "@/constants";
 import { RecordNotFoundError, throwRecordDuplicated, throwRecordNotFound } from "@/errors";
 import { db } from "@/database";
 
-import { TWasherHour, washerHours } from "./washer-hour.schema";
+import { TWasherHour, TWasherHourDayOfWeek, washerHours } from "./washer-hour.schema";
 import { TWasherHourFindQueryDTO } from "./washer-hour.controller.dto";
 
 export const washerHourRepository = {
@@ -107,7 +107,10 @@ export const washerHourRepository = {
         }
     },
 
-    getByUserIdAndDayOfWeek: async (userId: string, dayOfWeek: string): Promise<TWasherHour> => {
+    getByUserIdAndDayOfWeek: async (
+        userId: string,
+        dayOfWeek: TWasherHourDayOfWeek
+    ): Promise<TWasherHour> => {
         try {
             const result = await db
                 .select()

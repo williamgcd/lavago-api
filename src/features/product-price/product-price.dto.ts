@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { VEHICLE_TYPES } from "../vehicle";
 
 export const productPriceDTO = z.object({
     id: z.string(),
     productId: z.string(),
-    vehicleType: z.enum(['car', 'suv', 'truck', 'motorcycle']),
+    vehicleType: z.enum(VEHICLE_TYPES),
     price: z.number(),
     washerQuota: z.number(),
     traineeQuota: z.number(),

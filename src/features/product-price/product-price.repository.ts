@@ -5,6 +5,7 @@ import { db } from "@/database";
 
 import { TProductPrice, productPrices } from "./product-price.schema";
 import { TProductPriceFindQueryDTO } from "./product-price.controller.dto";
+import { TVehicleType } from "../vehicle";
 
 export const productPriceRepository = {
     create: async (data: Omit<Partial<TProductPrice>, 'id'>): Promise<TProductPrice> => {
@@ -119,7 +120,10 @@ export const productPriceRepository = {
         }
     },
 
-    getByProductIdAndVehicleType: async (productId: string, vehicleType: string): Promise<TProductPrice> => {
+    getByProductIdAndVehicleType: async (
+        productId: string,
+        vehicleType: TVehicleType
+    ): Promise<TProductPrice> => {
         try {
             const result = await db
                 .select()
