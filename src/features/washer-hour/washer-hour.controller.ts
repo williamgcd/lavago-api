@@ -3,7 +3,7 @@ import { PAGINATION } from "@/constants/pagination";
 import { throwInvalidRequestBody, throwInvalidRequestParam } from "@/errors";
 import { TResponse, TResponsePaginated } from "@/types/responses";
 
-import { washerHourCreateDTO, washerHourFindQueryDTO, washerHourUpdateDTO } from "./washer-hour.controller.dto";
+import { washerHourCreateDTO, washerHourFindQueryDTO, washerHourGetByUserIdAndDayOfWeekDTO, washerHourUpdateDTO } from "./washer-hour.controller.dto";
 import { washerHourService } from "./washer-hour.service";
 import { TWasherHour } from "./washer-hour.schema";
 
@@ -84,10 +84,11 @@ export const washerHourController = {
     },
 
     getByUserIdAndDayOfWeek: async (req: Request, res: Response) => {
-        const { userId, dayOfWeek } = req.params;
-        if (!userId || !dayOfWeek) {
+        const parsed = washerHourGetByUserIdAndDayOfWeekDTO.safeParse(req.params);
+        if (!parsed.success) {
             throwInvalidRequestParam('UserID and DayOfWeek are required');
         }
+        const { userId, dayOfWeek } = parsed.data;
         const washerHour = await washerHourService.getByUserIdAndDayOfWeek(userId, dayOfWeek);
         res.status(200).json({
             status: 'ok',

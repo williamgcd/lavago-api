@@ -4,6 +4,7 @@ import { TProductPriceFindQueryDTO } from "./product-price.controller.dto";
 import { TProductPriceEvents } from "./product-price.events";
 import { productPriceRepository } from "./product-price.repository";
 import { type TProductPrice } from "./product-price.schema";
+import { TVehicleType } from "../vehicle";
 
 export const productPriceService = {
     create: async (data: Omit<Partial<TProductPrice>, 'id'>): Promise<TProductPrice> => {
@@ -39,7 +40,7 @@ export const productPriceService = {
         return productPriceRepository.getById(id);
     },
 
-    getByProductIdAndVehicleType: async (productId: string, vehicleType: string): Promise<TProductPrice> => {
+    getByProductIdAndVehicleType: async (productId: string, vehicleType: TVehicleType): Promise<TProductPrice> => {
         return productPriceRepository.getByProductIdAndVehicleType(productId, vehicleType);
     },
 

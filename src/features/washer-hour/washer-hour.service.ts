@@ -3,7 +3,7 @@ import { eventBus } from "@/libs/event-bus-client";
 import { TWasherHourFindQueryDTO } from "./washer-hour.controller.dto";
 import { TWasherHourEvents } from "./washer-hour.events";
 import { washerHourRepository } from "./washer-hour.repository";
-import { type TWasherHour } from "./washer-hour.schema";
+import { TWasherHourDayOfWeek, type TWasherHour } from "./washer-hour.schema";
 
 export const washerHourService = {
     create: async (data: Omit<Partial<TWasherHour>, 'id'>): Promise<TWasherHour> => {
@@ -39,7 +39,7 @@ export const washerHourService = {
         return washerHourRepository.getById(id);
     },
 
-    getByUserIdAndDayOfWeek: async (userId: string, dayOfWeek: string): Promise<TWasherHour> => {
+    getByUserIdAndDayOfWeek: async (userId: string, dayOfWeek: TWasherHourDayOfWeek): Promise<TWasherHour> => {
         return washerHourRepository.getByUserIdAndDayOfWeek(userId, dayOfWeek);
     },
 

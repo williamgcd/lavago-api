@@ -3,7 +3,7 @@ import { PAGINATION } from "@/constants/pagination";
 import { throwInvalidRequestBody, throwInvalidRequestParam } from "@/errors";
 import { TResponse, TResponsePaginated } from "@/types/responses";
 
-import { productPriceCreateDTO, productPriceFindQueryDTO, productPriceUpdateDTO } from "./product-price.controller.dto";
+import { productPriceCreateDTO, productPriceFindQueryDTO, productPriceGetByProductIdAndVehicleTypeDTO, productPriceUpdateDTO } from "./product-price.controller.dto";
 import { productPriceService } from "./product-price.service";
 import { TProductPrice } from "./product-price.schema";
 
@@ -84,10 +84,11 @@ export const productPriceController = {
     },
 
     getByProductIdAndVehicleType: async (req: Request, res: Response) => {
-        const { productId, vehicleType } = req.params;
-        if (!productId || !vehicleType) {
+        const parsed = productPriceGetByProductIdAndVehicleTypeDTO.safeParse(req.params);
+        if (!parsed.success) {
             throwInvalidRequestParam('ProductID and VehicleType are required');
         }
+        const { productId, vehicleType } = parsed.data;
         const productPrice = await productPriceService.getByProductIdAndVehicleType(productId, vehicleType);
         res.status(200).json({
             status: 'ok',
