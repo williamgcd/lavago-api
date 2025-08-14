@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.schedule_slots (
     -- The booking this schedule_slots is associated with
     booking_id UUID,
     -- The washer this schedule_slots belongs to
-    washer_id UUID,
+    washer_id UUID NOT NULL,
 
     -- Whether or not the schedule_slots is available
     -- It might not be available even if no booking.

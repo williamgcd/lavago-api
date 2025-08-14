@@ -39,6 +39,7 @@ const repo = {
         }
 
         // Set default create fields
+        // Washer shares the same ID as the user_id;
         data.id = data.user_id;
 
         try {

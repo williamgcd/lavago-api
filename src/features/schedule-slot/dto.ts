@@ -16,7 +16,7 @@ export const ScheduleSlotDto = z.object({
     // The booking this schedule is associated with
     booking_id: zNull(z.uuid()),
     // The washer this schedule belongs to
-    washer_id: zNull(z.uuid()),
+    washer_id: z.uuid(),
 
     // Whether the exception is to make it available or not
     // It might not be available even if no booking.

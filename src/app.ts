@@ -14,8 +14,6 @@ import { appRoutes } from './app/routes/app.routes';
 import { botRoutes } from './app/routes/bot.routes';
 import { mcpRoutes } from './app/routes/mcp.routes';
 
-import { webhookRoutes } from './webhooks/routes';
-
 import { respond } from './shared/helpers/respond';
 
 import { healthCheck } from './app-health';

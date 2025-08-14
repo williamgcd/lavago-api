@@ -61,13 +61,6 @@ jspm_packages/
 ehthumbs.db
 Thumbs.db
 
-# Documentation
-docs/
-*.md
-
-# Database migrations (if not needed in production)
-database/migrations/
-
 # Generated database bootstrap file
 database/bootstrap.sql
 
@@ -77,3 +70,4 @@ database/bootstrap.sql
 ZOLD_*
 zold_*
 z_*
+trash
