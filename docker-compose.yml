@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  lavago-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - BASE_URL=http://localhost:3000
+      - APP_BASE=http://localhost:3000
+      - APP_NAME=LAVAGO API
+      - JWT_SECRET=dev-jwt-secret
+      - JWT_LENGTH=10d
+      - TOKEN=dev-token
+      # Add your actual environment variables here or use a .env file
+      # - SUPABASE_URL=your-supabase-url
+      # - SUPABASE_SECRET_KEY=your-supabase-key
+      # - PAGBANK_API_KEY=your-pagbank-key
+      # - PAGBANK_WEBHOOK_SECRET=your-webhook-secret
+    volumes:
+      - ./src:/app/src:ro  # Mount source code for development
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a database service for local development
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: lavago_dev
+  #     POSTGRES_USER: lavago_user
+  #     POSTGRES_PASSWORD: lavago_password
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:
+
