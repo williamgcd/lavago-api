@@ -14,15 +14,6 @@ import * as t from './types';
 const db = createDbClient('coupons');
 
 const repo = {
-    parse: async (data: Partial<t.TCouponDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('coupon.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new coupon record
      * @params values - the coupon values to create
@@ -74,6 +65,41 @@ const repo = {
             console.error('coupon.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter coupon records
+     * @param filters - The filters to apply to the coupon records
+     * @returns The filtered coupon records
+     */
+    filter: async (filters: t.TCouponDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.is_active !== undefined) {
+            const value = filters.is_active;
+            where.is_active = { op: 'eq', value };
+        }
+        if (filters.discount_type) {
+            const value = filters.discount_type;
+            where.discount_type = { op: 'eq', value };
+        }
+        if (filters.allowed_users) {
+            const value = filters.allowed_users;
+            where.allowed_users = { op: 'contains', value };
+        }
+        if (filters.blocked_users) {
+            const value = filters.blocked_users;
+            where.blocked_users = { op: 'contains', value };
+        }
+        if (filters.user_id) {
+            const user_id = filters.user_id;
+            where.allowed_users = { op: 'contains', value: user_id };
+            where.blocked_users = { op: 'not.contains', value: user_id };
+        }
+
+        return where;
     },
 
     /**
@@ -155,35 +181,27 @@ const repo = {
         filters: t.TCouponDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TCouponDto[] }> => {
-        const where: any = {};
-
-        if (filters.is_active !== undefined) {
-            const value = filters.is_active;
-            where.is_active = { op: 'eq', value };
-        }
-        if (filters.discount_type) {
-            const value = filters.discount_type;
-            where.discount_type = { op: 'eq', value };
-        }
-        if (filters.allowed_users) {
-            const value = filters.allowed_users;
-            where.allowed_users = { op: 'contains', value };
-        }
-        if (filters.blocked_users) {
-            const value = filters.blocked_users;
-            where.blocked_users = { op: 'contains', value };
-        }
-        if (filters.user_id) {
-            const user_id = filters.user_id;
-            where.allowed_users = { op: 'contains', value: user_id };
-            where.blocked_users = { op: 'not.contains', value: user_id };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.CouponDto.parse(r)) };
         } catch (err) {
             console.error('coupon.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a coupon record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed coupon record
+     */
+    parse: async (data: Partial<t.TCouponDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('coupon.repo.parse', err);
             throw err;
         }
     },

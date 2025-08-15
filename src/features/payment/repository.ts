@@ -16,22 +16,6 @@ const db = createDbClient('payments');
 
 const repo = {
     /**
-     * Parse and validate data against a Zod schema
-     * @param data - The data to validate
-     * @param schema - The Zod schema to validate against
-     * @returns The parsed and validated data
-     * @throws Error if validation fails
-     */
-    parse: async (data: Partial<t.TPaymentDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('payment.repo.parse', err);
-            throw err;
-        }
-    },
-
-    /**
      * Creates a new payment record
      * @param values - The payment values to create
      * @returns The created payment record
@@ -79,6 +63,50 @@ const repo = {
             console.error('payment.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter payment records
+     * @param filters - The filters to apply to the payment records
+     * @returns The filtered payment records
+     */
+    filter: async (filters: t.TPaymentDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+        if (filters.entity && filters.entity_id) {
+            const value = filters.entity_id;
+            where.entity_id = { op: 'eq', value };
+        }
+
+        if (filters.status) {
+            const value = filters.status;
+            where.status = { op: 'eq', value };
+        }
+        if (filters.type) {
+            const value = filters.type;
+            where.type = { op: 'eq', value };
+        }
+        if (filters.method) {
+            const value = filters.method;
+            where.method = { op: 'eq', value };
+        }
+
+        if (filters.provider) {
+            const value = filters.provider;
+            where.provider = { op: 'eq', value };
+        }
+
+        return where;
     },
 
     /**
@@ -136,46 +164,28 @@ const repo = {
         filters: t.TPaymentDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TPaymentDto[] }> => {
-        const where: any = {
-            deleted_at: { op: 'is', value: null },
-        };
-
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-        if (filters.entity && filters.entity_id) {
-            const value = filters.entity_id;
-            where.entity_id = { op: 'eq', value };
-        }
-
-        if (filters.status) {
-            const value = filters.status;
-            where.status = { op: 'eq', value };
-        }
-        if (filters.type) {
-            const value = filters.type;
-            where.type = { op: 'eq', value };
-        }
-        if (filters.method) {
-            const value = filters.method;
-            where.method = { op: 'eq', value };
-        }
-
-        if (filters.provider) {
-            const value = filters.provider;
-            where.provider = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.PaymentDto.parse(r)) };
         } catch (err) {
             console.error('payment.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse and validate data against a Zod schema
+     * @param data - The data to validate
+     * @param schema - The Zod schema to validate against
+     * @returns The parsed and validated data
+     * @throws Error if validation fails
+     */
+    parse: async (data: Partial<t.TPaymentDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('payment.repo.parse', err);
             throw err;
         }
     },

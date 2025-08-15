@@ -10,15 +10,6 @@ import * as t from './types';
 const db = createDbClient('chat_messsages');
 
 const repo = {
-    parse: async (data: Partial<t.TChatMessageDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('chat-message.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new chat message record
      * @params values - the chat message values to create
@@ -74,6 +65,34 @@ const repo = {
     },
 
     /**
+     * Filter chat message records
+     * @param filters - The filters to apply to the chat message records
+     * @returns The filtered chat message records
+     */
+    filter: async (filters: t.TChatMessageDtoFilter) => {
+        const where: any = {};
+
+        if (!filters.chat_id) {
+            throw new Error('Not possible to list messages from all chats');
+        }
+
+        if (filters.chat_id) {
+            const value = filters.chat_id;
+            where.chat_id = { op: 'eq', value };
+        }
+        if (filters.type) {
+            const value = filters.type;
+            where.type = { op: 'eq', value };
+        }
+        if (filters.created_by) {
+            const value = filters.created_by;
+            where.created_by = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
+    /**
      * Get a chat message record by id
      * @param id - The id of the chat message record to get
      * @returns The chat message record
@@ -108,30 +127,27 @@ const repo = {
         filters: t.TChatMessageDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TChatMessageDto[] }> => {
-        const where: any = {};
-
-        if (!filters.chat_id) {
-            throw new Error('Not possible to list messages from all chats');
-        }
-
-        if (filters.chat_id) {
-            const value = filters.chat_id;
-            where.chat_id = { op: 'eq', value };
-        }
-        if (filters.type) {
-            const value = filters.type;
-            where.type = { op: 'eq', value };
-        }
-        if (filters.created_by) {
-            const value = filters.created_by;
-            where.created_by = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.ChatMessageDto.parse(r)) };
         } catch (err) {
             console.error('chat-message.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a chat message record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed chat message record
+     */
+    parse: async (data: Partial<t.TChatMessageDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('chat-message.repo.parse', err);
             throw err;
         }
     },

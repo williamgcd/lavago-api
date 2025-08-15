@@ -10,15 +10,6 @@ import * as t from './types';
 const db = createDbClient('vehicles');
 
 const repo = {
-    parse: async (data: Partial<t.TVehicleDto>, schema: ZodObject) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('vehicle.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new vehicle record
      * @params values - the vehicle values to create
@@ -66,6 +57,23 @@ const repo = {
         }
     },
 
+    filter: async (filters: t.TVehicleDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+        
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.size) {
+            const value = filters.size;
+            where.size = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
     /**
      * Get a vehicle record by id
      * @param value - The id of the vehicle record to get
@@ -97,13 +105,27 @@ const repo = {
         filters: t.TVehicleDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TVehicleDto[] }> => {
-        const where: any = {};
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.VehicleDto.parse(r)) };
         } catch (err) {
             console.error('vehicle.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a vehicle record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed vehicle record
+     */
+    parse: async (data: Partial<t.TVehicleDto>, schema: ZodObject) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('vehicle.repo.parse', err);
             throw err;
         }
     },

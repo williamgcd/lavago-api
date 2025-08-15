@@ -16,22 +16,6 @@ const db = createDbClient('plans');
 
 const repo = {
     /**
-     * Parse and validate data against a Zod schema
-     * @param data - The data to validate
-     * @param schema - The Zod schema to validate against
-     * @returns The parsed and validated data
-     * @throws Error if validation fails
-     */
-    parse: async (data: Partial<t.TPlanDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('plan.repo.parse', err);
-            throw err;
-        }
-    },
-
-    /**
      * Creates a new plan record
      * @param values - The plan values to create
      * @returns The created plan record
@@ -86,6 +70,37 @@ const repo = {
             console.error('plan.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter plan records
+     * @param filters - The filters to apply to the plan records
+     * @returns The filtered plan records
+     */
+    filter: async (filters: t.TPlanDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+            is_active: { op: 'eq', value: true },
+        };
+
+        if (filters.is_active !== undefined) {
+            const value = filters.is_active;
+            where.is_active = { op: 'eq', value };
+        }
+        if (filters.is_available !== undefined) {
+            const value = filters.is_available;
+            where.is_available = { op: 'eq', value };
+        }
+        if (filters.booking_frequency) {
+            const value = filters.booking_frequency;
+            where.booking_frequency = { op: 'eq', value };
+        }
+        if (filters.payment_frequency) {
+            const value = filters.payment_frequency;
+            where.payment_frequency = { op: 'eq', value };
+        }
+
+        return where;
     },
 
     /**
@@ -178,33 +193,28 @@ const repo = {
         filters: t.TPlanDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TPlanDto[] }> => {
-        const where: any = {
-            deleted_at: { op: 'is', value: null },
-            is_active: { op: 'eq', value: true },
-        };
-
-        if (filters.is_active !== undefined) {
-            const value = filters.is_active;
-            where.is_active = { op: 'eq', value };
-        }
-        if (filters.is_available !== undefined) {
-            const value = filters.is_available;
-            where.is_available = { op: 'eq', value };
-        }
-        if (filters.booking_frequency) {
-            const value = filters.booking_frequency;
-            where.booking_frequency = { op: 'eq', value };
-        }
-        if (filters.payment_frequency) {
-            const value = filters.payment_frequency;
-            where.payment_frequency = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.PlanDto.parse(r)) };
         } catch (err) {
             console.error('plan.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse and validate data against a Zod schema
+     * @param data - The data to validate
+     * @param schema - The Zod schema to validate against
+     * @returns The parsed and validated data
+     * @throws Error if validation fails
+     */
+    parse: async (data: Partial<t.TPlanDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('plan.repo.parse', err);
             throw err;
         }
     },

@@ -10,15 +10,6 @@ import * as t from './types';
 const db = createDbClient('audits');
 
 const repo = {
-    parse: async (data: Partial<t.TAuditDto>, schema: ZodObject) => {
-        try {
-            return await schema.parseAsync(data);
-        } catch (err) {
-            console.error('audit.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new audit record
      * @params values - the audit values to create
@@ -63,6 +54,41 @@ const repo = {
     },
 
     /**
+     * Filter audit records
+     * @param filters - The filters to apply to the audit records
+     * @returns The filtered audit records
+     */
+    filter: async (filters: t.TAuditDtoFilter) => {
+        const where: any = {};
+
+        if (filters.creator_user) {
+            const value = filters.creator_user;
+            where.creator_user = { op: 'eq', value };
+        }
+
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+        if (filters.entity && filters.entity_id) {
+            const value = filters.entity_id;
+            where.entity_id = { op: 'eq', value };
+        }
+
+        if (filters.action) {
+            const value = filters.action;
+            where.action = { op: 'eq', value };
+        }
+
+        if (filters.request_id) {
+            const value = filters.request_id;
+            where.request_id = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
+    /**
      * Get an audit record by id
      * @param id - The id of the audit record to get
      * @returns The audit record
@@ -90,37 +116,27 @@ const repo = {
         filters: t.TAuditDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TAuditDto[] }> => {
-        const where: any = {};
-
-        if (filters.creator_user) {
-            const value = filters.creator_user;
-            where.creator_user = { op: 'eq', value };
-        }
-
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-        if (filters.entity && filters.entity_id) {
-            const value = filters.entity_id;
-            where.entity_id = { op: 'eq', value };
-        }
-
-        if (filters.action) {
-            const value = filters.action;
-            where.action = { op: 'eq', value };
-        }
-
-        if (filters.request_id) {
-            const value = filters.request_id;
-            where.request_id = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.AuditDto.parse(r)) };
         } catch (err) {
             console.error('audit.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a audit record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed audit record
+     */
+    parse: async (data: Partial<t.TAuditDto>, schema: ZodObject) => {
+        try {
+            return await schema.parseAsync(data);
+        } catch (err) {
+            console.error('audit.repo.parse', err);
             throw err;
         }
     },
@@ -151,7 +167,7 @@ const repo = {
 
         try {
             // Updates record on the database;
-            const updated = await db.update(id, data);
+            const updated = await db.update(record.id, data);
             return d.AuditDto.parse(updated);
         } catch (err) {
             console.error('audit.repo.update', err);

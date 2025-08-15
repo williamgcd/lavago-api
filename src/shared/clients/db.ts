@@ -10,7 +10,7 @@ const createDbFilters = (
 ) => {
     for (const [key, value] of Object.entries(filters)) {
         const filter = Array.isArray(value) ? value : [value];
-        if (key === 'or') {
+        if (key === '$or') {
             const or = filter.map(f => {
                 const { op, field, value } = f;
                 return [field, op, value].join('.');
@@ -94,6 +94,20 @@ const createDbClient = (table: string) => ({
             throw error;
         }
         return { count, data: data as T[] };
+    },
+
+    selectAll: async <T = any>(
+        filters: TDbClientFilters = {}
+    ): Promise<T[]> => {
+        let query = supabaseClient.from(table).select('*');
+        query = createDbFilters(query, filters);
+
+        const { data, error } = await query;
+        if (error) {
+            console.error('db.select', error);
+            throw error;
+        }
+        return data as T[];
     },
 
     single: async <T = any>(

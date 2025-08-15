@@ -14,15 +14,6 @@ import * as t from './types';
 const db = createDbClient('chats');
 
 const repo = {
-    parse: async (data: Partial<t.TChatDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('chat.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new chat record
      * @params values - the chat values to create
@@ -74,6 +65,31 @@ const repo = {
             console.error('chat.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter chat records
+     * @param filters - The filters to apply to the chat records
+     * @returns The filtered chat records
+     */
+    filter: async (filters: t.TChatDtoFilter) => {
+        const where: any = {};
+
+        if (filters.status) {
+            const value = filters.status;
+            where.status = { op: 'eq', value };
+        }
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_ids = { op: 'contains', value };
+        }
+
+        return where;
     },
 
     /**
@@ -166,27 +182,27 @@ const repo = {
         filters: t.TChatDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TChatDto[] }> => {
-        const where: any = {};
-
-        if (filters.status) {
-            const value = filters.status;
-            where.status = { op: 'eq', value };
-        }
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_ids = { op: 'contains', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.ChatDto.parse(r)) };
         } catch (err) {
             console.error('chat.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a chat record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed chat record
+     */
+    parse: async (data: Partial<t.TChatDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('chat.repo.parse', err);
             throw err;
         }
     },

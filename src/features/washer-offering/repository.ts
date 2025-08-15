@@ -14,17 +14,7 @@ import * as t from './types';
 const db = createDbClient('washer_offerings');
 
 const repo = {
-    parse: async (
-        data: Partial<t.TWasherOfferingDto>,
-        schema: ZodObject<any>
-    ) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('washer-offering.repo.parse', err);
-            throw err;
-        }
-    },
+    
 
     /**
      * Creates a new washer offering record
@@ -82,6 +72,44 @@ const repo = {
     },
 
     /**
+     * Filter washer offerings
+     * @param filters - The filters to apply to the washer offerings
+     * @returns The filtered washer offerings
+     */
+    filter: async (filters: t.TWasherOfferingDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.offering_id) {
+            const value = filters.offering_id;
+            where.offering_id = { op: 'eq', value };
+        }
+        if (filters.washer_id) {
+            const value = filters.washer_id;
+            where.washer_id = { op: 'eq', value };
+        }
+        if (filters.is_certified !== undefined) {
+            const value = filters.is_certified;
+            where.is_certified = { op: 'eq', value };
+        }
+        if (filters.is_preferred !== undefined) {
+            const value = filters.is_preferred;
+            where.is_preferred = { op: 'eq', value };
+        }
+        if (filters.certified_by) {
+            const value = filters.certified_by;
+            where.certified_by = { op: 'eq', value };
+        }
+        if (filters.trained_by) {
+            const value = filters.trained_by;
+            where.trained_by = { op: 'eq', value };
+        }
+        
+        return where;
+    },
+
+    /**
      * Get a washer offering record by id
      * @param id - The id of the washer offering record to get
      * @returns The washer offering record
@@ -104,6 +132,11 @@ const repo = {
         }
     },
 
+    /**
+     * Get an existing washer offering record
+     * @param values - The values to get the existing washer offering record for
+     * @returns The existing washer offering record
+     */
     getExisting: async (values: Partial<t.TWasherOfferingDto>) => {
         try {
             const data = await db.single({
@@ -133,38 +166,30 @@ const repo = {
         filters: t.TWasherOfferingDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TWasherOfferingDto[] }> => {
-        const where: any = {};
-
-        if (filters.offering_id) {
-            const value = filters.offering_id;
-            where.offering_id = { op: 'eq', value };
-        }
-        if (filters.washer_id) {
-            const value = filters.washer_id;
-            where.washer_id = { op: 'eq', value };
-        }
-        if (filters.is_certified !== undefined) {
-            const value = filters.is_certified;
-            where.is_certified = { op: 'eq', value };
-        }
-        if (filters.is_preferred !== undefined) {
-            const value = filters.is_preferred;
-            where.is_preferred = { op: 'eq', value };
-        }
-        if (filters.certified_by) {
-            const value = filters.certified_by;
-            where.certified_by = { op: 'eq', value };
-        }
-        if (filters.trained_by) {
-            const value = filters.trained_by;
-            where.trained_by = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.WasherOfferingDto.parse(r)) };
         } catch (err) {
             console.error('washer-offering.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a washer offering record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed washer offering record
+     */
+    parse: async (
+        data: Partial<t.TWasherOfferingDto>,
+        schema: ZodObject<any>
+    ) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('washer-offering.repo.parse', err);
             throw err;
         }
     },

@@ -15,15 +15,6 @@ import * as t from './types';
 const db = createDbClient('offerings');
 
 const repo = {
-    parse: async (data: Partial<t.TOfferingDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('offering.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new offering record
      * @params values - the offering values to create
@@ -77,6 +68,37 @@ const repo = {
             console.error('offering.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter offering records
+     * @param filters - The filters to apply to the offering records
+     * @returns The filtered offering records
+     */
+    filter: async (filters: t.TOfferingDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+            is_active: { op: 'eq', value: true },
+        };
+
+        if (filters.is_active !== undefined) {
+            const value = filters.is_active;
+            where.is_active = { op: 'eq', value };
+        }
+        if (filters.mode) {
+            const value = filters.mode;
+            where.mode = { op: 'eq', value };
+        }
+        if (filters.type) {
+            const value = filters.type;
+            where.type = { op: 'eq', value };
+        }
+        if (filters.currency) {
+            const value = filters.currency;
+            where.currency = { op: 'eq', value };
+        }
+
+        return where;
     },
 
     /**
@@ -187,33 +209,27 @@ const repo = {
         filters: t.TOfferingDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TOfferingDto[] }> => {
-        const where: any = {
-            deleted_at: { op: 'is', value: null },
-            is_active: { op: 'eq', value: true },
-        };
-
-        if (filters.is_active !== undefined) {
-            const value = filters.is_active;
-            where.is_active = { op: 'eq', value };
-        }
-        if (filters.mode) {
-            const value = filters.mode;
-            where.mode = { op: 'eq', value };
-        }
-        if (filters.type) {
-            const value = filters.type;
-            where.type = { op: 'eq', value };
-        }
-        if (filters.currency) {
-            const value = filters.currency;
-            where.currency = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.OfferingDto.parse(r)) };
         } catch (err) {
             console.error('offering.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a offering record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed offering record
+     */
+    parse: async (data: Partial<t.TOfferingDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('offering.repo.parse', err);
             throw err;
         }
     },

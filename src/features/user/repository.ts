@@ -17,22 +17,6 @@ const db = createDbClient('users');
 
 const repo = {
     /**
-     * Parse and validate data against a Zod schema
-     * @param data - The data to validate
-     * @param schema - The Zod schema to validate against
-     * @returns The parsed and validated data
-     * @throws Error if validation fails
-     */
-    parse: async (data: Partial<t.TUserDto>, schema: ZodObject) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('user.repo.parse', err);
-            throw err;
-        }
-    },
-
-    /**
      * Creates a new user record with default OTP and referral code
      * @param values - The user values to create
      * @returns The created user record
@@ -95,6 +79,31 @@ const repo = {
             console.error('user.repo.delete', err);
             throw err;
         }
+    },
+
+    filter: async (filters: t.TUserDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.email) {
+            const value = filters.email;
+            where.email = { op: 'ilike', value: `%${value}%` };
+        }
+        if (filters.phone) {
+            const value = filters.phone;
+            where.phone = { op: 'ilike', value: `%${value}%` };
+        }
+        if (filters.role) {
+            const value = filters.role;
+            where.role = { op: 'eq', value };
+        }
+        if (filters.user_ids && filters.user_ids.length > 0) {
+            const value = filters.user_ids;
+            where.id = { op: 'in', value };
+        }
+
+        return where;
     },
 
     /**
@@ -190,21 +199,21 @@ const repo = {
      * @returns The user record
      */
     getExisting: async (values: Partial<t.TUserDto>) => {
-        const or = [];
+        const $or = [];
         if (values.email) {
             const value = values.email;
-            or.push({ op: 'eq', field: 'email', value });
+            $or.push({ op: 'eq', field: 'email', value });
         }
         if (values.phone) {
             const value = values.phone;
-            or.push({ op: 'eq', field: 'phone', value });
+            $or.push({ op: 'eq', field: 'phone', value });
         }
-        if (or.length === 0) {
+        if ($or.length === 0) {
             throw new Error('Either email or phone is required');
         }
 
         try {
-            const data = await db.single({ or });
+            const data = await db.single({ $or });
             if (!data) {
                 return undefined;
             }
@@ -228,30 +237,28 @@ const repo = {
         filters: t.TUserDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TUserDto[] }> => {
-        const where: any = {};
-
-        if (filters.email) {
-            const value = filters.email;
-            where.email = { op: 'ilike', value: `%${value}%` };
-        }
-        if (filters.phone) {
-            const value = filters.phone;
-            where.phone = { op: 'ilike', value: `%${value}%` };
-        }
-        if (filters.role) {
-            const value = filters.role;
-            where.role = { op: 'eq', value };
-        }
-        if (filters.user_ids && filters.user_ids.length > 0) {
-            const value = filters.user_ids;
-            where.id = { op: 'in', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.UserDto.parse(r)) };
         } catch (err) {
             console.error('user.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse and validate data against a Zod schema
+     * @param data - The data to validate
+     * @param schema - The Zod schema to validate against
+     * @returns The parsed and validated data
+     * @throws Error if validation fails
+     */
+    parse: async (data: Partial<t.TUserDto>, schema: ZodObject) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('user.repo.parse', err);
             throw err;
         }
     },

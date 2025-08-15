@@ -15,15 +15,6 @@ import * as t from './types';
 const db = createDbClient('addresses');
 
 const repo = {
-    parse: async (data: Partial<t.TAddressDto>, schema: ZodObject) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('address.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new address record
      * @params values - the address values to create
@@ -72,6 +63,36 @@ const repo = {
     },
 
     /**
+     * Filter address records
+     * @param filters - The filters to apply to the address records
+     * @returns The filtered address records
+     */
+    filter: async (filters: t.TAddressDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.property_id) {
+            const value = filters.property_id;
+            where.property_id = { op: 'eq', value };
+        }
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.is_default) {
+            const value = filters.is_default;
+            where.is_default = { op: 'eq', value };
+        }
+        if (filters.zip_code) {
+            const value = filters.zip_code;
+            where.zip_code = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
+    /**
      * Get a address record by id
      * @param value - The id of the address record to get
      * @returns The address record
@@ -102,30 +123,27 @@ const repo = {
         filters: t.TAddressDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TAddressDto[] }> => {
-        const where: any = {};
-
-        if (filters.property_id) {
-            const value = filters.property_id;
-            where.property_id = { op: 'eq', value };
-        }
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-        if (filters.is_default) {
-            const value = filters.is_default;
-            where.is_default = { op: 'eq', value };
-        }
-        if (filters.zip_code) {
-            const value = filters.zip_code;
-            where.zip_code = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.AddressDto.parse(r)) };
         } catch (err) {
             console.error('address.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a address record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed address record
+     */
+    parse: async (data: Partial<t.TAddressDto>, schema: ZodObject) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('address.repo.parse', err);
             throw err;
         }
     },

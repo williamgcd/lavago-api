@@ -28,6 +28,17 @@ const serv = {
     },
 
     /**
+     * Fetch schedule exceptions
+     * @param filters - The filters to apply to the schedule-exception records
+     * @returns The schedule-exception records
+     */
+    fetch: async (
+        filters: t.TScheduleExceptionDtoFilter = {}
+    ): Promise<t.TScheduleExceptionDto[]> => {
+        return repo.fetch(filters);
+    },
+
+    /**
      * Get a ticket record by id
      * @param id - The id of the ticket record to get
      * @returns The ticket record
@@ -50,11 +61,11 @@ const serv = {
     },
 
     /**
-     * List ticket records by user id
-     * @param user_id - The user id to filter by
-     * @param filters - The filters to apply to the ticket records
-     * @param pagination - The pagination to apply to the ticket records
-     * @returns The ticket records
+     * List schedule exceptions by washer id
+     * @param washer_id - The washer id to filter by
+     * @param filters - The filters to apply to the schedule exceptions
+     * @param pagination - The pagination to apply to the schedule exceptions
+     * @returns The schedule exceptions
      */
     listByWasherId: async (
         washer_id: t.TScheduleExceptionDtoFilter['washer_id'],

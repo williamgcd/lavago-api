@@ -10,15 +10,6 @@ import * as t from './types';
 const db = createDbClient('questions');
 
 const repo = {
-    parse: async (data: Partial<t.TQuestionDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('question.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new question record
      * @params values - the question values to create
@@ -69,6 +60,30 @@ const repo = {
     },
 
     /**
+     * Filter question records
+     * @param filters - The filters to apply to the question records
+     * @returns The filtered question records
+     */
+    filter: async (filters: t.TQuestionDtoFilter) => {
+        const where: any = {};
+
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+        if (filters.metric) {
+            const value = filters.metric;
+            where.metric = { op: 'eq', value };
+        }
+        if (filters.pattern) {
+            const value = filters.pattern;
+            where.pattern = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
+    /**
      * Get a question record by id
      * @param id - The id of the question record to get
      * @returns The question record
@@ -99,26 +114,27 @@ const repo = {
         filters: t.TQuestionDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TQuestionDto[] }> => {
-        const where: any = {};
-
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-        if (filters.metric) {
-            const value = filters.metric;
-            where.metric = { op: 'eq', value };
-        }
-        if (filters.pattern) {
-            const value = filters.pattern;
-            where.pattern = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.QuestionDto.parse(r)) };
         } catch (err) {
             console.error('question.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a question record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed question record
+     */
+    parse: async (data: Partial<t.TQuestionDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('question.repo.parse', err);
             throw err;
         }
     },

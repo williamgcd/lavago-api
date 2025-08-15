@@ -10,15 +10,6 @@ import * as t from './types';
 const db = createDbClient('properties');
 
 const repo = {
-    parse: async (data: Partial<t.TPropertyDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('property.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new property record
      * @params values - the property values to create
@@ -69,6 +60,26 @@ const repo = {
     },
 
     /**
+     * Filter property records
+     * @param filters - The filters to apply to the property records
+     * @returns The filtered property records
+     */
+    filter: async (filters: t.TPropertyDtoFilter) => {
+        const where: any = {};
+
+        if (filters.is_supported !== undefined) {
+            const value = filters.is_supported;
+            where.is_supported = { op: 'eq', value };
+        }
+        if (filters.zip_code) {
+            const value = filters.zip_code;
+            where.zip_code = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
+    /**
      * Get a property record by id
      * @param id - The id of the property record to get
      * @returns The property record
@@ -99,22 +110,27 @@ const repo = {
         filters: t.TPropertyDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TPropertyDto[] }> => {
-        const where: any = {};
-
-        if (filters.is_supported !== undefined) {
-            const value = filters.is_supported;
-            where.is_supported = { op: 'eq', value };
-        }
-        if (filters.zip_code) {
-            const value = filters.zip_code;
-            where.zip_code = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.PropertyDto.parse(r)) };
         } catch (err) {
             console.error('property.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a property record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed property record
+     */
+    parse: async (data: Partial<t.TPropertyDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('property.repo.parse', err);
             throw err;
         }
     },

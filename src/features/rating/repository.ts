@@ -10,15 +10,6 @@ import * as t from './types';
 const db = createDbClient('ratings');
 
 const repo = {
-    parse: async (data: Partial<t.TRatingDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('rating.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new rating record
      * @params values - the rating values to create
@@ -67,6 +58,39 @@ const repo = {
     },
 
     /**
+     * Filter rating records
+     * @param filters - The filters to apply to the rating records
+     * @returns The filtered rating records
+     */
+    filter: async (filters: t.TRatingDtoFilter) => {
+        const where: any = {};
+
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+        if (filters.entity && filters.entity_id) {
+            const value = filters.entity_id;
+            where.entity_id = { op: 'eq', value };
+        }
+
+        if (filters.metric) {
+            const value = filters.metric;
+            where.metric = { op: 'eq', value };
+        }
+        if (filters.pattern) {
+            const value = filters.pattern;
+            where.pattern = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
+    /**
      * Get a rating record by id
      * @param id - The id of the rating record to get
      * @returns The rating record
@@ -97,35 +121,27 @@ const repo = {
         filters: t.TRatingDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TRatingDto[] }> => {
-        const where: any = {};
-
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-        if (filters.entity && filters.entity_id) {
-            const value = filters.entity_id;
-            where.entity_id = { op: 'eq', value };
-        }
-
-        if (filters.metric) {
-            const value = filters.metric;
-            where.metric = { op: 'eq', value };
-        }
-        if (filters.pattern) {
-            const value = filters.pattern;
-            where.pattern = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.RatingDto.parse(r)) };
         } catch (err) {
             console.error('rating.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a rating record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed rating record
+     */
+    parse: async (data: Partial<t.TRatingDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('rating.repo.parse', err);
             throw err;
         }
     },

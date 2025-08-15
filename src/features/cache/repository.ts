@@ -15,15 +15,6 @@ import { date } from '@/shared/utils/date';
 const db = createDbClient('cache');
 
 const repo = {
-    parse: async (data: Partial<t.TCacheDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('cache.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new cache record
      * @params values - the cache values to create
@@ -75,6 +66,20 @@ const repo = {
             console.error('cache.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter cache records
+     * @param filters - The filters to apply to the cache records
+     * @returns The filtered cache records
+     */
+    filter: async (filters: t.TCacheDtoFilter) => {
+        const where: any = {};
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+        return where;
     },
 
     /**
@@ -166,18 +171,27 @@ const repo = {
         filters: t.TCacheDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TCacheDto[] }> => {
-        const where: any = {};
-
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.CacheDto.parse(r)) };
         } catch (err) {
             console.error('cache.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a cache record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed cache record
+     */
+    parse: async (data: Partial<t.TCacheDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('cache.repo.parse', err);
             throw err;
         }
     },

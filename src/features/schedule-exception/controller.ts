@@ -44,6 +44,12 @@ const ctrl = {
         });
     },
 
+    listByDate: async (req: Request, res: Response) => {
+        const parsed = d.ScheduleExceptionDtoByDate.parse(req.params);
+        req.query.date = parsed.date.toJSON().split('T')[0];
+        ctrl.list(req, res);
+    },
+
     listByWasherId: async (req: Request, res: Response) => {
         const parsed = d.ScheduleExceptionDtoByWasherId.parse(req.params);
         req.query.washer_id = parsed.washer_id;

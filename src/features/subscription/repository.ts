@@ -16,25 +16,6 @@ const db = createDbClient('subscriptions');
 
 const repo = {
     /**
-     * Parse and validate data against a Zod schema
-     * @param data - The data to validate
-     * @param schema - The Zod schema to validate against
-     * @returns The parsed and validated data
-     * @throws Error if validation fails
-     */
-    parse: async (
-        data: Partial<t.TSubscriptionDto>,
-        schema: ZodObject<any>
-    ) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('subscription.repo.parse', err);
-            throw err;
-        }
-    },
-
-    /**
      * Creates a new subscription record
      * @param values - The subscription values to create
      * @returns The created subscription record
@@ -84,6 +65,40 @@ const repo = {
             console.error('subscription.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter subscription records
+     * @param filters - The filters to apply to the subscription records
+     * @returns The filtered subscription records
+     */
+    filter: async (filters: t.TSubscriptionDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.plan_id) {
+            const value = filters.plan_id;
+            where.plan_id = { op: 'eq', value };
+        }
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.is_active !== undefined) {
+            const value = filters.is_active;
+            where.is_active = { op: 'eq', value };
+        }
+        if (filters.is_automated !== undefined) {
+            const value = filters.is_automated;
+            where.is_automated = { op: 'eq', value };
+        }
+        if (filters.status) {
+            const value = filters.status;
+            where.status = { op: 'eq', value };
+        }
+
+        return where;
     },
 
     /**
@@ -172,36 +187,31 @@ const repo = {
         filters: t.TSubscriptionDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TSubscriptionDto[] }> => {
-        const where: any = {
-            deleted_at: { op: 'is', value: null },
-        };
-
-        if (filters.plan_id) {
-            const value = filters.plan_id;
-            where.plan_id = { op: 'eq', value };
-        }
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-        if (filters.is_active !== undefined) {
-            const value = filters.is_active;
-            where.is_active = { op: 'eq', value };
-        }
-        if (filters.is_automated !== undefined) {
-            const value = filters.is_automated;
-            where.is_automated = { op: 'eq', value };
-        }
-        if (filters.status) {
-            const value = filters.status;
-            where.status = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.SubscriptionDto.parse(r)) };
         } catch (err) {
             console.error('subscription.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse and validate data against a Zod schema
+     * @param data - The data to validate
+     * @param schema - The Zod schema to validate against
+     * @returns The parsed and validated data
+     * @throws Error if validation fails
+     */
+    parse: async (
+        data: Partial<t.TSubscriptionDto>,
+        schema: ZodObject<any>
+    ) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('subscription.repo.parse', err);
             throw err;
         }
     },

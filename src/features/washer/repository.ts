@@ -14,15 +14,6 @@ import * as t from './types';
 const db = createDbClient('user_washers');
 
 const repo = {
-    parse: async (data: Partial<t.TWasherDto>, schema: ZodObject) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('washer.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new washer record
      * @params values - the washer values to create
@@ -80,6 +71,17 @@ const repo = {
         }
     },
 
+    filter: async (filters: t.TWasherDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        return where;
+    },
+
     /**
      * Get a washer record by id
      * @param value - The id of the washer record to get
@@ -124,6 +126,11 @@ const repo = {
         }
     },
 
+    /**
+     * Get an existing washer record
+     * @param values - The values to get the existing washer record for
+     * @returns The existing washer record
+     */
     getExisting: async (values: Partial<t.TWasherDto>) => {
         try {
             const data = await db.single({
@@ -152,18 +159,27 @@ const repo = {
         filters: t.TWasherDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TWasherDto[] }> => {
-        const where: any = {};
-
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.WasherDto.parse(r)) };
         } catch (err) {
             console.error('washer.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a washer record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed washer record
+     */
+    parse: async (data: Partial<t.TWasherDto>, schema: ZodObject) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('washer.repo.parse', err);
             throw err;
         }
     },

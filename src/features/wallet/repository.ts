@@ -16,22 +16,6 @@ const db = createDbClient('wallets');
 
 const repo = {
     /**
-     * Parse and validate data against a Zod schema
-     * @param data - The data to validate
-     * @param schema - The Zod schema to validate against
-     * @returns The parsed and validated data
-     * @throws Error if validation fails
-     */
-    parse: async (data: Partial<t.TWalletDto>, schema: ZodObject) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('wallet.repo.parse', err);
-            throw err;
-        }
-    },
-
-    /**
      * Creates a new wallet record with default balance and currency
      * @param values - The wallet values to create
      * @returns The created wallet record
@@ -91,6 +75,32 @@ const repo = {
             console.error('wallet.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter wallet records
+     * @param filters - The filters to apply to the wallet records
+     * @returns The filtered wallet records
+     */
+    filter: async (filters: t.TWalletDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.currency) {
+            const value = filters.currency;
+            where.currency = { op: 'eq', value };
+        }
+        if (filters.balance !== undefined) {
+            const value = filters.balance;
+            where.balance = { op: 'eq', value };
+        }
+
+        return where;
     },
 
     /**
@@ -175,26 +185,28 @@ const repo = {
         filters: t.TWalletDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TWalletDto[] }> => {
-        const where: any = {};
-
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-        if (filters.currency) {
-            const value = filters.currency;
-            where.currency = { op: 'eq', value };
-        }
-        if (filters.balance !== undefined) {
-            const value = filters.balance;
-            where.balance = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.WalletDto.parse(r)) };
         } catch (err) {
             console.error('wallet.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse and validate data against a Zod schema
+     * @param data - The data to validate
+     * @param schema - The Zod schema to validate against
+     * @returns The parsed and validated data
+     * @throws Error if validation fails
+     */
+    parse: async (data: Partial<t.TWalletDto>, schema: ZodObject) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('wallet.repo.parse', err);
             throw err;
         }
     },

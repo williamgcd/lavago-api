@@ -22,11 +22,15 @@ export const ScheduleSlotDto = z.object({
     // It might not be available even if no booking.
     is_available: z.boolean().default(true),
 
-    // What type of slot it is
-    type: z.enum(ENUMS.TYPE).default('custom'),
-
     duration: z.coerce.number().default(SCHEDULE.SLOT_DURATION),
     timestamp: z.coerce.date(),
+
+    // What offerings does this schedule support?
+    // If not specified, then all the offerings.
+    offering_ids: z.array(z.uuid()).default([]),
+
+    // What type of slot it is
+    type: z.enum(ENUMS.TYPE).default('custom'),
 });
 
 /* ************************** */
@@ -48,10 +52,13 @@ export const ScheduleSlotDtoFilter = ScheduleSlotDto.pick({
     booking_id: true,
     washer_id: true,
     is_available: true,
-    type: true,
     timestamp: true,
+    offering_ids: true,
+    type: true,
 })
     .extend({
+        offering_id: z.uuid(),
+        date: z.string(),
         interval_ini: z.coerce.date(),
         interval_end: z.coerce.date(),
     })
@@ -73,6 +80,10 @@ export const ScheduleSlotDtoById = z.object({
 
 export const ScheduleSlotDtoByBookingId = z.object({
     booking_id: z.uuid(),
+});
+
+export const ScheduleSlotDtoByDate = z.object({
+    date: z.coerce.date(),
 });
 
 export const ScheduleSlotDtoByWasherId = z.object({

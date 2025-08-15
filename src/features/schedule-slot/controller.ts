@@ -46,6 +46,12 @@ const ctrl = {
         ctrl.list(req, res);
     },
 
+    listByDate: async (req: Request, res: Response) => {
+        const parsed = d.ScheduleSlotDtoByDate.parse(req.params);
+        req.query.date = parsed.date.toJSON().split('T')[0];
+        ctrl.list(req, res);
+    },
+
     listByWasherId: async (req: Request, res: Response) => {
         const parsed = d.ScheduleSlotDtoByWasherId.parse(req.params);
         req.query.washer_id = parsed.washer_id;

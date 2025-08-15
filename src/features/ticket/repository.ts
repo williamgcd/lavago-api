@@ -15,15 +15,6 @@ import * as t from './types';
 const db = createDbClient('tickets');
 
 const repo = {
-    parse: async (data: Partial<t.TTicketDto>, schema: ZodObject) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('ticket.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new ticket record
      * @params values - the ticket values to create
@@ -78,6 +69,40 @@ const repo = {
     },
 
     /**
+     * Filter ticket records
+     * @param filters - The filters to apply to the ticket records
+     * @returns The filtered ticket records
+     */
+    filter: async (filters: t.TTicketDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.assigned_to) {
+            const value = filters.assigned_to;
+            where.assigned_to = { op: 'eq', value };
+        }
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+        if (filters.entity && filters.entity_id) {
+            const value = filters.entity_id;
+            where.entity_id = { op: 'eq', value };
+        }
+        if (filters.status) {
+            const value = filters.status;
+            where.status = { op: 'eq', value };
+        }
+
+        return where;
+    },
+
+    /**
      * Get a ticket record by id
      * @param id - The id of the ticket record to get
      * @returns The ticket record
@@ -98,6 +123,11 @@ const repo = {
         }
     },
 
+    /**
+     * Get an existing ticket record
+     * @param values - The values to get the existing ticket record for
+     * @returns The existing ticket record
+     */
     getExisting: async (values: Partial<t.TTicketDto>) => {
         try {
             const data = await db.single({
@@ -128,34 +158,27 @@ const repo = {
         filters: t.TTicketDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TTicketDto[] }> => {
-        const where: any = {};
-
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-        if (filters.assigned_to) {
-            const value = filters.assigned_to;
-            where.assigned_to = { op: 'eq', value };
-        }
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-        if (filters.entity && filters.entity_id) {
-            const value = filters.entity_id;
-            where.entity_id = { op: 'eq', value };
-        }
-        if (filters.status) {
-            const value = filters.status;
-            where.status = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.TicketDto.parse(r)) };
         } catch (err) {
             console.error('ticket.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a ticket record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed ticket record
+     */
+    parse: async (data: Partial<t.TTicketDto>, schema: ZodObject) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('ticket.repo.parse', err);
             throw err;
         }
     },

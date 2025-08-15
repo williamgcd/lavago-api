@@ -48,8 +48,11 @@ export const ScheduleExceptionDtoFilter = ScheduleExceptionDto.pick({
     is_available: true,
     washer_ids: true,
     type: true,
+    interval_ini: true,
+    interval_end: true,
 })
     .extend({
+        date: z.string(),
         washer_id: z.uuid(),
     })
     .partial();
@@ -62,6 +65,10 @@ export const ScheduleExceptionDtoUpdate = ScheduleExceptionDto.pick({});
 
 export const ScheduleExceptionDtoById = z.object({
     schedule_exception_id: ScheduleExceptionDto.shape.id,
+});
+
+export const ScheduleExceptionDtoByDate = z.object({
+    date: z.coerce.date(),
 });
 
 export const ScheduleExceptionDtoByWasherId = z.object({

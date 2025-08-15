@@ -15,15 +15,6 @@ import * as t from './types';
 const db = createDbClient('transactions');
 
 const repo = {
-    parse: async (data: Partial<t.TTransactionDto>, schema: ZodObject) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('transaction.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new transaction record
      * @params values - the transaction values to create
@@ -77,6 +68,40 @@ const repo = {
             console.error('transaction.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter transaction records
+     * @param filters - The filters to apply to the transaction records
+     * @returns The filtered transaction records
+     */
+    filter: async (filters: t.TTransactionDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.user_id) {
+            const value = filters.user_id;
+            where.user_id = { op: 'eq', value };
+        }
+        if (filters.entity) {
+            const value = filters.entity;
+            where.entity = { op: 'eq', value };
+        }
+        if (filters.entity && filters.entity_id) {
+            const value = filters.entity_id;
+            where.entity_id = { op: 'eq', value };
+        }
+        if (filters.status) {
+            const value = filters.status;
+            where.status = { op: 'eq', value };
+        }
+        if (filters.operation) {
+            const value = filters.operation;
+            where.operation = { op: 'eq', value };
+        }
+
+        return where;
     },
 
     /**
@@ -139,34 +164,27 @@ const repo = {
         filters: t.TTransactionDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TTransactionDto[] }> => {
-        const where: any = {};
-
-        if (filters.user_id) {
-            const value = filters.user_id;
-            where.user_id = { op: 'eq', value };
-        }
-        if (filters.entity) {
-            const value = filters.entity;
-            where.entity = { op: 'eq', value };
-        }
-        if (filters.entity && filters.entity_id) {
-            const value = filters.entity_id;
-            where.entity_id = { op: 'eq', value };
-        }
-        if (filters.status) {
-            const value = filters.status;
-            where.status = { op: 'eq', value };
-        }
-        if (filters.operation) {
-            const value = filters.operation;
-            where.operation = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.TransactionDto.parse(r)) };
         } catch (err) {
             console.error('transaction.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a transaction record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed transaction record
+     */
+    parse: async (data: Partial<t.TTransactionDto>, schema: ZodObject) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('transaction.repo.parse', err);
             throw err;
         }
     },

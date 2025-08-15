@@ -10,18 +10,6 @@ import * as t from './types';
 const db = createDbClient('schedule-slots');
 
 const repo = {
-    parse: async (
-        data: Partial<t.TScheduleExceptionDto>,
-        schema: ZodObject
-    ) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('schedule.exception.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new schedule-slot record
      * @params values - the schedule-slot values to create
@@ -72,6 +60,66 @@ const repo = {
     },
 
     /**
+     * Fetch schedule exceptions
+     * @param filters - The filters to apply to the schedule-exception records
+     * @returns The schedule-exception records
+     */
+    fetch: async (
+        filters: t.TScheduleExceptionDtoFilter = {}
+    ): Promise<t.TScheduleExceptionDto[]> => {
+        const where = await repo.filter(filters);
+        try {
+            const data = await db.selectAll(where);
+            return data.map(r => d.ScheduleExceptionDto.parse(r));
+        } catch (err) {
+            console.error('schedule.exception.repo.fetch', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Filter schedule-exception records
+     * @param filters - The filters to apply to the schedule-exception records
+     * @returns The filtered schedule-exception records
+     */
+    filter: async (filters: t.TScheduleExceptionDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.is_available) {
+            const value = filters.is_available;
+            where.is_available = { op: 'eq', value };
+        }
+        if (filters.type) {
+            const value = filters.type;
+            where.type = { op: 'eq', value };
+        }
+        if (filters.interval_ini) {
+            const value = filters.interval_ini;
+            where.interval_ini = { op: 'eq', value };
+        }
+        if (filters.interval_end) {
+            const value = filters.interval_end;
+            where.interval_end = { op: 'eq', value };
+        }
+
+        if (filters.washer_id) {
+            const value = filters.washer_id;
+            where.washer_ids = { op: 'in', value };
+        }
+
+        if (!filters.interval_ini && !filters.interval_end && filters.date) {
+            const ini = new Date(filters.date + 'T00:00:00Z');
+            const end = new Date(filters.date + 'T23:59:59Z');
+            where.interval_ini = { op: 'gte', value: ini };
+            where.interval_end = { op: 'lte', value: end };
+        }
+
+        return where;
+    },
+
+    /**
      * Get a schedule-slot record by id
      * @param id - The id of the schedule-slot record to get
      * @returns The schedule-slot record
@@ -104,21 +152,7 @@ const repo = {
         filters: t.TScheduleExceptionDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TScheduleExceptionDto[] }> => {
-        const where: any = {};
-
-        if (filters.is_available) {
-            const value = filters.is_available;
-            where.is_available = { op: 'eq', value };
-        }
-        if (filters.type) {
-            const value = filters.type;
-            where.type = { op: 'eq', value };
-        }
-
-        if (filters.washer_id) {
-            const value = filters.washer_id;
-            where.washer_ids = { op: 'in', value };
-        }
+        const where = await repo.filter(filters);
 
         try {
             const { count, data } = await db.select(where, pagination);
@@ -126,6 +160,24 @@ const repo = {
             return { count, data: mapped };
         } catch (err) {
             console.error('schedule.exception.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a schedule-exception record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed schedule-exception record
+     */
+    parse: async (
+        data: Partial<t.TScheduleExceptionDto>,
+        schema: ZodObject
+    ) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('schedule.exception.repo.parse', err);
             throw err;
         }
     },

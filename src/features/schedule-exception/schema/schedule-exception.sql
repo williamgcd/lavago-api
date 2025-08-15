@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.schedule_exceptions (
     created_by VARCHAR(255) NOT NULL DEFAULT 'system',
 
     -- If the schedule exception is for washers
+    -- If empty, the exception will be applied for everyone.
     washer_ids UUID[] NOT NULL,
 
     -- Whether exception to available or not

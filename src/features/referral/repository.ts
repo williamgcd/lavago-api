@@ -14,15 +14,6 @@ import * as t from './types';
 const db = createDbClient('referrals');
 
 const repo = {
-    parse: async (data: Partial<t.TReferralDto>, schema: ZodObject<any>) => {
-        try {
-            return schema.parseAsync(data);
-        } catch (err) {
-            console.error('referral.repo.parse', err);
-            throw err;
-        }
-    },
-
     /**
      * Creates a new referral record
      * @params values - the referral values to create
@@ -76,6 +67,36 @@ const repo = {
             console.error('referral.repo.delete', err);
             throw err;
         }
+    },
+
+    /**
+     * Filter referral records
+     * @param filters - The filters to apply to the referral records
+     * @returns The filtered referral records
+     */
+    filter: async (filters: t.TReferralDtoFilter) => {
+        const where: any = {
+            deleted_at: { op: 'is', value: null },
+        };
+
+        if (filters.status) {
+            const value = filters.status;
+            where.status = { op: 'eq', value };
+        }
+        if (filters.referrer_user_id) {
+            const value = filters.referrer_user_id;
+            where.referrer_user_id = { op: 'eq', value };
+        }
+        if (filters.referred_user_id) {
+            const value = filters.referred_user_id;
+            where.referred_user_id = { op: 'eq', value };
+        }
+        if (filters.referral) {
+            const value = filters.referral;
+            where.referral = { op: 'eq', value };
+        }
+
+        return where;
     },
 
     /**
@@ -144,30 +165,27 @@ const repo = {
         filters: t.TReferralDtoFilter,
         pagination?: TPagination
     ): Promise<{ count: number; data: t.TReferralDto[] }> => {
-        const where: any = {};
-
-        if (filters.status) {
-            const value = filters.status;
-            where.status = { op: 'eq', value };
-        }
-        if (filters.referrer_user_id) {
-            const value = filters.referrer_user_id;
-            where.referrer_user_id = { op: 'eq', value };
-        }
-        if (filters.referred_user_id) {
-            const value = filters.referred_user_id;
-            where.referred_user_id = { op: 'eq', value };
-        }
-        if (filters.referral) {
-            const value = filters.referral;
-            where.referral = { op: 'eq', value };
-        }
-
+        const where = await repo.filter(filters);
         try {
             const { count, data } = await db.select(where, pagination);
             return { count, data: data.map(r => d.ReferralDto.parse(r)) };
         } catch (err) {
             console.error('referral.repo.list', err);
+            throw err;
+        }
+    },
+
+    /**
+     * Parse a referral record
+     * @param data - The data to parse
+     * @param schema - The schema to parse the data with
+     * @returns The parsed referral record
+     */
+    parse: async (data: Partial<t.TReferralDto>, schema: ZodObject<any>) => {
+        try {
+            return schema.parseAsync(data);
+        } catch (err) {
+            console.error('referral.repo.parse', err);
             throw err;
         }
     },
